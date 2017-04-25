@@ -15,8 +15,8 @@
 package utils
 
 import (
+	"crypto/rand"
 	"fmt"
-	"math/rand"
 	"net"
 	"net/url"
 	"strings"
@@ -65,11 +65,12 @@ func ParseRepository(repository string) (project, rest string) {
 // GenerateRandomString generates a random string
 func GenerateRandomString() string {
 	length := 32
-	rand.Seed(time.Now().UTC().UnixNano())
 	const chars = "abcdefghijklmnopqrstuvwxyz0123456789"
+	l := len(chars)
 	result := make([]byte, length)
+	rand.Read(result)
 	for i := 0; i < length; i++ {
-		result[i] = chars[rand.Intn(len(chars))]
+		result[i] = chars[int(result[i])%l]
 	}
 	return string(result)
 }
