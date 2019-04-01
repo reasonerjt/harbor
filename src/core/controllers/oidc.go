@@ -108,8 +108,8 @@ func play(t *oidc.Token) {
 	log.Infof("Verify token error: %v", err)
 	log.Infof("Sleep 5 seconds")
 	time.Sleep(5 * time.Second)
-	_, err = oidc.VerifyToken(ctx, t.IDToken))
-// Should fail here
+	_, err = oidc.VerifyToken(ctx, t.IDToken)
+	// Should fail here
 	log.Infof("After sleep, verify token error: %v", err)
 	t, err = oidc.RefreshToken(ctx, t)
 	log.Infof("Refresh error for t: %v", err)
