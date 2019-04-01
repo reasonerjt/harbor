@@ -49,6 +49,7 @@ func (p *providerHelper) get() (*gooidc.Provider, error) {
 	if p.instance.Load() != nil {
 		s := p.setting.Load().(models.OIDCSetting)
 		if s.Endpoint != p.ep.url || s.SkipCertVerify != p.ep.skipCertVerify { // relevant settings have changed, need to re-create provider.
+			log.Debugf("Created new OIDC provider")
 			if err := p.create(); err != nil {
 				return nil, err
 			}
@@ -98,8 +99,7 @@ func (p *providerHelper) create() error {
 	} else {
 		client = &http.Client{}
 	}
-	ctx := context.Background()
-	gooidc.ClientContext(ctx, client)
+	ctx := gooidc.ClientContext(context.Background(), client)
 	provider, err := gooidc.NewProvider(ctx, s.Endpoint)
 	if err != nil {
 		return fmt.Errorf("failed to create OIDC provider, error: %v", err)
@@ -109,6 +109,7 @@ func (p *providerHelper) create() error {
 		url:            s.Endpoint,
 		skipCertVerify: s.SkipCertVerify,
 	}
+	log.Debugf("Endpoint info for current provider: %+v", p.ep)
 	return nil
 }
 
