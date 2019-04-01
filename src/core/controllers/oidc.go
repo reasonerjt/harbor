@@ -120,7 +120,7 @@ func play(t *oidc.Token) {
 	str := string(b)
 	log.Infof("Marshaled token: %v", str)
 	nt := &oidc.Token{}
-	_ := json.Unmarshal([]byte(str), nt)
+	_ = json.Unmarshal([]byte(str), nt)
 	log.Infof("Sleep 5 seconds")
 	time.Sleep(5 * time.Second)
 	_, err = oidc.VerifyToken(ctx, nt.IDToken)
