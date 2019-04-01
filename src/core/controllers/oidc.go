@@ -89,6 +89,7 @@ func (oc *OIDCController) Callback() {
 		return
 	}
 	oc.SetSession(idTokenKey, token.IDToken)
+	play(token)
 	//TODO: check and trigger onboard popup or redirect user to project page
 	oc.Data["json"] = d
 	oc.ServeFormatted()
