@@ -91,15 +91,7 @@ func (p *providerHelper) create() error {
 		return errors.New("the configuration is not loaded")
 	}
 	s := p.setting.Load().(models.OIDCSetting)
-	var client *http.Client
-	if s.SkipCertVerify {
-		client = &http.Client{
-			Transport: insecureTransport,
-		}
-	} else {
-		client = &http.Client{}
-	}
-	ctx := gooidc.ClientContext(context.Background(), client)
+	ctx := prepareContext(context.Background(), s)
 	provider, err := gooidc.NewProvider(ctx, s.Endpoint)
 	if err != nil {
 		return fmt.Errorf("failed to create OIDC provider, error: %v", err)
@@ -125,6 +117,18 @@ var insecureTransport = &http.Transport{
 type Token struct {
 	*oauth2.Token
 	IDToken string `json:"id_token"`
+}
+
+func prepareContext(ctx context.Context, settings models.OIDCSetting) context.Context {
+	var client *http.Client
+	if settings.SkipCertVerify {
+		client = &http.Client{
+			Transport: insecureTransport,
+		}
+	} else {
+		client = &http.Client{}
+	}
+	return gooidc.ClientContext(ctx, client)
 }
 
 func getOauthConf() (*oauth2.Config, error) {
@@ -167,6 +171,8 @@ func AuthCodeURL(state string) (string, error) {
 // ExchangeToken get the token from token provider via the code
 func ExchangeToken(ctx context.Context, code string) (*Token, error) {
 	oauth, err := getOauthConf()
+	setting := provider.setting.Load().(models.OIDCSetting)
+	ctx = prepareContext(ctx, setting)
 	if err != nil {
 		log.Errorf("Failed to get OAuth configuration, error: %v", err)
 		return nil, err
