@@ -15,13 +15,17 @@
 package controllers
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/goharbor/harbor/src/common"
 	"github.com/goharbor/harbor/src/common/utils"
+	"github.com/goharbor/harbor/src/common/utils/log"
 	"github.com/goharbor/harbor/src/common/utils/oidc"
 	"github.com/goharbor/harbor/src/core/api"
 	"github.com/goharbor/harbor/src/core/config"
 	"net/http"
+	"time"
 )
 
 const idTokenKey = "oidc_id_token"
@@ -85,7 +89,7 @@ func (oc *OIDCController) Callback() {
 		return
 	}
 	oc.SetSession(idTokenKey, token.IDToken)
-	// TODO: check and trigger onboard popup or redirect user to project page
+	//TODO: check and trigger onboard popup or redirect user to project page
 	oc.Data["json"] = d
 	oc.ServeFormatted()
 }
@@ -95,4 +99,32 @@ func (oc *OIDCController) Onboard() {
 	oc.RenderError(http.StatusNotImplemented, "")
 	return
 
+}
+
+func play(t *oidc.Token) {
+	ctx := context.Background()
+	log.Infof("Current id_token: %s", t.IDToken)
+	_, err := oidc.VerifyToken(ctx, t.IDToken)
+	log.Infof("Verify token error: %v", err)
+	log.Infof("Sleep 5 seconds")
+	time.Sleep(5 * time.Second)
+	_, err = oidc.VerifyToken(ctx, t.IDToken))
+// Should fail here
+	log.Infof("After sleep, verify token error: %v", err)
+	t, err = oidc.RefreshToken(ctx, t)
+	log.Infof("Refresh error for t: %v", err)
+	_, err = oidc.VerifyToken(ctx, t.IDToken)
+	log.Infof("After refresh, Verify token error: %v", err)
+	log.Infof("new id_token: %s", t.IDToken)
+	b, _ := json.Marshal(t)
+	str := string(b)
+	log.Infof("Marshaled token: %v", str)
+	nt := &oidc.Token{}
+	_ := json.Unmarshal([]byte(str), nt)
+	log.Infof("Sleep 5 seconds")
+	time.Sleep(5 * time.Second)
+	_, err = oidc.VerifyToken(ctx, nt.IDToken)
+	log.Infof("After sleep, Verify token error: %v", err)
+	nt, err = oidc.RefreshToken(ctx, nt)
+	log.Infof("Refresh error for nt: %v", err)
 }

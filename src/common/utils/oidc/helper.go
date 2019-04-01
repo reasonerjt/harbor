@@ -171,12 +171,12 @@ func AuthCodeURL(state string) (string, error) {
 // ExchangeToken get the token from token provider via the code
 func ExchangeToken(ctx context.Context, code string) (*Token, error) {
 	oauth, err := getOauthConf()
-	setting := provider.setting.Load().(models.OIDCSetting)
-	ctx = prepareContext(ctx, setting)
 	if err != nil {
 		log.Errorf("Failed to get OAuth configuration, error: %v", err)
 		return nil, err
 	}
+	setting := provider.setting.Load().(models.OIDCSetting)
+	ctx = prepareContext(ctx, setting)
 	oauthToken, err := oauth.Exchange(ctx, code)
 	if err != nil {
 		return nil, err
@@ -192,4 +192,20 @@ func VerifyToken(ctx context.Context, rawIDToken string) (*gooidc.IDToken, error
 	}
 	verifier := p.Verifier(&gooidc.Config{ClientID: provider.setting.Load().(models.OIDCSetting).ClientID})
 	return verifier.Verify(ctx, rawIDToken)
+}
+
+func RefreshToken(ctx context.Context, token *Token) (*Token, error) {
+	oauth, err := getOauthConf()
+	if err != nil {
+		log.Errorf("Failed to get OAuth configuration, error: %v", err)
+		return nil, err
+	}
+	setting := provider.setting.Load().(models.OIDCSetting)
+	ctx = prepareContext(ctx, setting)
+	ts := oauth.TokenSource(ctx, token.Token)
+	t, err := ts.Token()
+	if err != nil {
+		return nil, err
+	}
+	return &Token{Token: t, IDToken: t.Extra("id_token").(string)}, nil
 }
