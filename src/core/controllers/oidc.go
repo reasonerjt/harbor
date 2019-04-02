@@ -128,4 +128,10 @@ func play(t *oidc.Token) {
 	log.Infof("After sleep, Verify token error: %v", err)
 	nt, err = oidc.RefreshToken(ctx, nt)
 	log.Infof("Refresh error for nt: %v", err)
+	nt.RefreshToken = "fake"
+	nt, err = oidc.RefreshToken(ctx, nt)
+	log.Infof("After mess up refresh token error for nt: %v, refresh token: %s", err, nt.RefreshToken)
+	log.Infof("Sleep 5 seconds")
+	time.Sleep(5 * time.Second)
+	log.Infof("After mess up refresh token, and sleep for 5 seconds error for nt: %v", err)
 }
