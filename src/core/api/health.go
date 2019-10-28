@@ -64,6 +64,11 @@ type HealthAPI struct {
 	BaseController
 }
 
+// Prepare resources for follow-up actions.
+func (h *HealthAPI) Prepare() {
+	h.BaseController.Prepare()
+}
+
 // CheckHealth checks the health of system
 func (h *HealthAPI) CheckHealth() {
 	var isHealthy healthy = true

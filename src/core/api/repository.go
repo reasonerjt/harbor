@@ -85,6 +85,11 @@ type manifestResp struct {
 	Config   interface{} `json:"config,omitempty" `
 }
 
+// Prepare resources for follow-up actions.
+func (ra *RepositoryAPI) Prepare() {
+	ra.BaseController.Prepare()
+}
+
 // Get ...
 func (ra *RepositoryAPI) Get() {
 	projectID, err := ra.GetInt64("project_id")

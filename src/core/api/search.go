@@ -43,6 +43,11 @@ type searchResult struct {
 	Chart      *[]*search.Result        `json:"chart,omitempty"`
 }
 
+// Prepare resources for follow-up actions.
+func (s *SearchAPI) Prepare() {
+	s.BaseController.Prepare()
+}
+
 // Get ...
 func (s *SearchAPI) Get() {
 	keyword := s.GetString("q")

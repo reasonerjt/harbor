@@ -109,6 +109,11 @@ type GeneralInfo struct {
 	NotificationEnable          bool                             `json:"notification_enable"`
 }
 
+// Prepare resources for follow-up actions.
+func (sia *SystemInfoAPI) Prepare() {
+	sia.BaseController.Prepare()
+}
+
 // GetVolumeInfo gets specific volume storage info.
 func (sia *SystemInfoAPI) GetVolumeInfo() {
 	if !sia.SecurityCtx.IsAuthenticated() {
