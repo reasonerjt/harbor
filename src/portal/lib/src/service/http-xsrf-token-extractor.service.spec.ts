@@ -5,7 +5,7 @@ import { SharedModule } from '../shared/shared.module';
 import { CookieService } from "ngx-cookie";
 
 describe('HttpXsrfTokenExtractorToBeUsed', () => {
-    let cookie =  "fdsa|ds";
+  let cookie =  "fdsa|ds";
   let mockCookieService =  {
       get: function () {
           return cookie;
@@ -31,12 +31,19 @@ describe('HttpXsrfTokenExtractorToBeUsed', () => {
     expect(service).toBeTruthy();
   }));
 
-  it('should be right get token', inject([HttpXsrfTokenExtractorToBeUsed], (service: HttpXsrfTokenExtractorToBeUsed) => {
+  it('should be get right token when the cookie exists', inject([HttpXsrfTokenExtractorToBeUsed],
+    (service: HttpXsrfTokenExtractorToBeUsed) => {
+    mockCookieService.set("fdsa|ds");
     let token = service.getToken();
-    expect(btoa(token)).toEqual("fdsa");
+    expect(btoa(token)).toEqual(cookie.split("|")[0]);
+  }));
+
+  it('should be get right token when the cookie does not exist', inject([HttpXsrfTokenExtractorToBeUsed],
+    (service: HttpXsrfTokenExtractorToBeUsed) => {
     mockCookieService.set(null);
-    token = service.getToken();
+    let token = service.getToken();
     expect(token).toBeNull();
   }));
+
 
 });
