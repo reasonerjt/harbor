@@ -134,7 +134,7 @@ func (s *SecurityContext) GetProjectRoles(projectIDOrName interface{}) []int {
 
 func mergeRoles(rolesA, rolesB []int) []int {
 	type void struct{}
-	var roles []int
+	roles := make([]int, 0)
 	var placeHolder void
 	roleSet := make(map[int]void)
 	for _, r := range rolesA {

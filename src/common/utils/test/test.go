@@ -145,6 +145,12 @@ func TraceCfgMap(cfgs map[string]interface{}) {
 
 // CheckSetsEqual - check int set if they are equals
 func CheckSetsEqual(setA, setB []int) bool {
+	if setA == nil && setB == nil {
+		return true
+	}
+	if (setA == nil && setB != nil) || (setA != nil && setB == nil) {
+		return false
+	}
 	if len(setA) != len(setB) {
 		return false
 	}
