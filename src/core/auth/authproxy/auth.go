@@ -16,9 +16,11 @@ package authproxy
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/goharbor/harbor/src/jobservice/logger"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -39,13 +41,7 @@ import (
 const refreshDuration = 2 * time.Second
 const userEntryComment = "By Authproxy"
 
-var secureTransport = &http.Transport{
-	Proxy: http.ProxyFromEnvironment,
-}
-var insecureTransport = &http.Transport{
-	TLSClientConfig: &tls.Config{
-		InsecureSkipVerify: true,
-	},
+var transport = &http.Transport{
 	Proxy: http.ProxyFromEnvironment,
 }
 
@@ -56,7 +52,6 @@ type Auth struct {
 	sync.Mutex
 	Endpoint            string
 	TokenReviewEndpoint string
-	SkipCertVerify      bool
 	SkipSearch          bool
 	settingTimeStamp    time.Time
 	client              *http.Client
@@ -219,16 +214,28 @@ func (a *Auth) ensure() error {
 		}
 		a.Endpoint = setting.Endpoint
 		a.TokenReviewEndpoint = setting.TokenReviewEndpoint
-		a.SkipCertVerify = !setting.VerifyCert
 		a.SkipSearch = setting.SkipSearch
+		tlsCfg, err := getTLSConfig(setting)
+		if err != nil {
+			return err
+		}
+		transport.TLSClientConfig = tlsCfg
+		a.client.Transport = transport
 	}
-	if a.SkipCertVerify {
-		a.client.Transport = insecureTransport
-	} else {
-		a.client.Transport = secureTransport
-	}
-
 	return nil
+}
+
+func getTLSConfig(setting *models.HTTPAuthProxy) (*tls.Config, error) {
+	c := setting.ServerCertificate
+	if setting.VerifyCert && len(c) > 0 {
+		certs := x509.NewCertPool()
+		if !certs.AppendCertsFromPEM([]byte(c)) {
+			logger.Errorf("Failed to pin server certificate, please double check if it's valid, certificate: %s", c)
+			return nil, fmt.Errorf("failed to pin server certificate for authproxy")
+		}
+		return &tls.Config{RootCAs: certs}, nil
+	}
+	return &tls.Config{InsecureSkipVerify: !setting.VerifyCert}, nil
 }
 
 func init() {

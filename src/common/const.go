@@ -105,6 +105,7 @@ const (
 	HTTPAuthProxyTokenReviewEndpoint = "http_authproxy_tokenreview_endpoint"
 	HTTPAuthProxyVerifyCert          = "http_authproxy_verify_cert"
 	HTTPAuthProxySkipSearch          = "http_authproxy_skip_search"
+	HTTPAuthProxyServerCertificate   = "http_authproxy_server_certificate"
 	OIDCName                         = "oidc_name"
 	OIDCEndpoint                     = "oidc_endpoint"
 	OIDCCLientID                     = "oidc_client_id"
