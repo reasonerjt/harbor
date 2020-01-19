@@ -1,16 +1,15 @@
-FROM node:10.15.0 as nodeportal
+FROM photon:2.0 as nodeportal
 
 WORKDIR /build_dir
 
-ARG npm_registry=https://registry.npmjs.org
+ARG npm_registry=http://build-artifactory.eng.vmware.com/artifactory/api/npm/npm
 ENV NPM_CONFIG_REGISTRY=${npm_registry}
 
 COPY src/portal/package.json /build_dir
 COPY src/portal/package-lock.json /build_dir
 COPY ./docs/swagger.yaml /build_dir
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends python-yaml=3.12-1 \
+RUN tdnf install -y nodejs PyYAML \
     && python -c 'import sys, yaml, json; y=yaml.load(sys.stdin.read()); print json.dumps(y)' < swagger.yaml > swagger.json \
     && npm install
 
