@@ -26,6 +26,7 @@ import (
 	"github.com/goharbor/harbor/src/pkg/art"
 	"github.com/goharbor/harbor/src/pkg/immutabletag/match"
 	"github.com/goharbor/harbor/src/pkg/immutabletag/match/rule"
+	"github.com/goharbor/harbor/src/pkg/signature"
 	"github.com/opencontainers/go-digest"
 	"strings"
 
@@ -89,6 +90,7 @@ func NewController() Controller {
 		repoMgr:      repository.Mgr,
 		artMgr:       artifact.Mgr,
 		tagMgr:       tag.Mgr,
+		sigMgr:       signature.GetManager(),
 		abstractor:   abstractor.NewAbstractor(),
 		immutableMtr: rule.NewRuleMatcher(),
 	}
@@ -100,6 +102,7 @@ type controller struct {
 	repoMgr      repository.Manager
 	artMgr       artifact.Manager
 	tagMgr       tag.Manager
+	sigMgr       signature.Manager
 	abstractor   abstractor.Abstractor
 	immutableMtr match.ImmutableTagMatcher
 }
@@ -391,16 +394,34 @@ func (c *controller) assembleTag(ctx context.Context, tag *tm.Tag, option *TagOp
 	if option == nil {
 		return t
 	}
+	repo, err := c.repoMgr.Get(ctx, tag.RepositoryID)
+	if err != nil {
+		log.Error("Failed to get repo for tag: %s, error: %v", tag.Name, err)
+		return t
+	}
 	if option.WithImmutableStatus {
-		repo, err := c.repoMgr.Get(ctx, tag.RepositoryID)
-		if err != nil {
-			log.Error(err)
+		t.Immutable = c.isImmutable(repo.ProjectID, repo.Name, tag.Name)
+	}
+	if option.WithSignature {
+		if a, err := c.artMgr.Get(ctx, t.ArtifactID); err != nil {
+			log.Errorf("Failed to get artifact for tag: %s, error: %v, skip populating signature")
 		} else {
-			t.Immutable = c.isImmutable(repo.ProjectID, repo.Name, tag.Name)
+			c.populateTagSignature(ctx, repo.Name, t, a.Digest, option)
 		}
 	}
-	// TODO populate signature on tag level?
 	return t
+}
+
+func (c *controller) populateTagSignature(ctx context.Context, repo string, tag *Tag, digest string, option *TagOption) {
+	if option.SignatureChecker == nil {
+		chk, err := signature.GetManager().GetCheckerByRepo(ctx, repo)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		option.SignatureChecker = chk
+	}
+	tag.Signed = option.SignatureChecker.IsTagSigned(tag.Name, digest)
 }
 
 // check whether the tag is Immutable

@@ -17,6 +17,7 @@ package artifact
 import (
 	"github.com/go-openapi/strfmt"
 	"github.com/goharbor/harbor/src/pkg/artifact"
+	"github.com/goharbor/harbor/src/pkg/signature"
 	"github.com/goharbor/harbor/src/pkg/tag/model/tag"
 	"github.com/goharbor/harbor/src/server/v2.0/models"
 )
@@ -71,6 +72,7 @@ func (a *Artifact) ToSwagger() *models.Artifact {
 			PushTime:     strfmt.DateTime(tag.PushTime),
 			RepositoryID: tag.RepositoryID,
 			Immutable:    tag.Immutable,
+			Signed:       tag.Signed,
 		})
 	}
 	for addition, link := range a.AdditionLinks {
@@ -89,7 +91,8 @@ func (a *Artifact) ToSwagger() *models.Artifact {
 type Tag struct {
 	tag.Tag
 	Immutable bool
-	// TODO add other attrs: signature, label, etc
+	Signed    bool
+	// TODO add other attrs: label, etc
 }
 
 // AdditionLink is a link via that the addition can be fetched
@@ -104,13 +107,13 @@ type Option struct {
 	TagOption        *TagOption // only works when WithTag is set to true
 	WithLabel        bool
 	WithScanOverview bool
-	// TODO move it to TagOption?
-	WithSignature bool
 }
 
 // TagOption is used to specify the properties returned when listing/getting tags
 type TagOption struct {
 	WithImmutableStatus bool
+	WithSignature       bool
+	SignatureChecker    *signature.Checker
 }
 
 // TODO move this to GC controller?
