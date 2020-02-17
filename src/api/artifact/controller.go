@@ -415,7 +415,7 @@ func (c *controller) assembleTag(ctx context.Context, tag *tm.Tag, option *TagOp
 	}
 	repo, err := c.repoMgr.Get(ctx, tag.RepositoryID)
 	if err != nil {
-		log.Error("Failed to get repo for tag: %s, error: %v", tag.Name, err)
+		log.Errorf("Failed to get repo for tag: %s, error: %v", tag.Name, err)
 		return t
 	}
 	if option.WithImmutableStatus {
@@ -423,7 +423,7 @@ func (c *controller) assembleTag(ctx context.Context, tag *tm.Tag, option *TagOp
 	}
 	if option.WithSignature {
 		if a, err := c.artMgr.Get(ctx, t.ArtifactID); err != nil {
-			log.Errorf("Failed to get artifact for tag: %s, error: %v, skip populating signature")
+			log.Errorf("Failed to get artifact for tag: %s, error: %v, skip populating signature", t.Name, err)
 		} else {
 			c.populateTagSignature(ctx, repo.Name, t, a.Digest, option)
 		}
