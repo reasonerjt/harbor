@@ -261,7 +261,6 @@ func (c *controllerTestSuite) TestList() {
 	option := &Option{
 		WithTag:          true,
 		WithScanOverview: true,
-		WithSignature:    true,
 	}
 	c.artMgr.On("List").Return(1, []*artifact.Artifact{
 		{
