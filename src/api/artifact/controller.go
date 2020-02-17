@@ -385,9 +385,6 @@ func (c *controller) assembleArtifact(ctx context.Context, art *artifact.Artifac
 	if option.WithScanOverview {
 		c.populateScanOverview(ctx, artifact)
 	}
-	if option.WithSignature {
-		c.populateSignature(ctx, artifact)
-	}
 	// populate addition links
 	c.populateAdditionLinks(ctx, artifact)
 	return artifact
