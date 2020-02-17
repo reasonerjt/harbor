@@ -26,6 +26,7 @@ import (
 	"github.com/goharbor/harbor/src/pkg/art"
 	"github.com/goharbor/harbor/src/pkg/immutabletag/match"
 	"github.com/goharbor/harbor/src/pkg/immutabletag/match/rule"
+	"github.com/goharbor/harbor/src/pkg/label"
 	"github.com/goharbor/harbor/src/pkg/signature"
 	"github.com/opencontainers/go-digest"
 	"strings"
@@ -78,6 +79,10 @@ type Controller interface {
 	// The addition is different according to the artifact type:
 	// build history for image; values.yaml, readme and dependencies for chart, etc
 	GetAddition(ctx context.Context, artifactID int64, additionType string) (addition *resolver.Addition, err error)
+	// AddLabel to the specified artifact
+	AddLabel(ctx context.Context, artifactID int64, labelID int64) (err error)
+	// RemoveLabel from the specified artifact
+	RemoveLabel(ctx context.Context, artifactID int64, labelID int64) (err error)
 	// TODO move this to GC controller?
 	// Prune removes the useless artifact records. The underlying registry data will
 	// be removed during garbage collection
@@ -91,6 +96,7 @@ func NewController() Controller {
 		artMgr:       artifact.Mgr,
 		tagMgr:       tag.Mgr,
 		sigMgr:       signature.GetManager(),
+		labelMgr:     label.Mgr,
 		abstractor:   abstractor.NewAbstractor(),
 		immutableMtr: rule.NewRuleMatcher(),
 	}
@@ -103,6 +109,7 @@ type controller struct {
 	artMgr       artifact.Manager
 	tagMgr       tag.Manager
 	sigMgr       signature.Manager
+	labelMgr     label.Manager
 	abstractor   abstractor.Abstractor
 	immutableMtr match.ImmutableTagMatcher
 }
@@ -272,6 +279,10 @@ func (c *controller) getByTag(ctx context.Context, repository, tag string, optio
 }
 
 func (c *controller) Delete(ctx context.Context, id int64) error {
+	// remove labels added to the artifact
+	if err := c.labelMgr.RemoveAllFrom(ctx, id); err != nil {
+		return err
+	}
 	// delete all tags that attached to the artifact
 	_, tags, err := c.tagMgr.List(ctx, &q.Query{
 		Keywords: map[string]interface{}{
@@ -314,7 +325,6 @@ func (c *controller) ListTags(ctx context.Context, query *q.Query, option *TagOp
 func (c *controller) DeleteTag(ctx context.Context, tagID int64) error {
 	// Immutable checking is covered in middleware
 	// TODO check signature
-	// TODO delete label
 	// TODO fire delete tag event
 	return c.tagMgr.Delete(ctx, tagID)
 }
@@ -350,6 +360,14 @@ func (c *controller) GetAddition(ctx context.Context, artifactID int64, addition
 	}
 }
 
+func (c *controller) AddLabel(ctx context.Context, artifactID int64, labelID int64) error {
+	return c.labelMgr.AddTo(ctx, labelID, artifactID)
+}
+
+func (c *controller) RemoveLabel(ctx context.Context, artifactID int64, labelID int64) error {
+	return c.labelMgr.RemoveFrom(ctx, labelID, artifactID)
+}
+
 // assemble several part into a single artifact
 func (c *controller) assembleArtifact(ctx context.Context, art *artifact.Artifact, option *Option) *Artifact {
 	artifact := &Artifact{
@@ -358,32 +376,36 @@ func (c *controller) assembleArtifact(ctx context.Context, art *artifact.Artifac
 	if option == nil {
 		return artifact
 	}
-	// populate tags
 	if option.WithTag {
-		_, tgs, err := c.tagMgr.List(ctx, &q.Query{
-			Keywords: map[string]interface{}{
-				"artifact_id": artifact.ID,
-			},
-		})
-		if err == nil {
-			// assemble tags
-			for _, tg := range tgs {
-				artifact.Tags = append(artifact.Tags, c.assembleTag(ctx, tg, option.TagOption))
-			}
-		} else {
-			log.Errorf("failed to list tag of artifact %d: %v", artifact.ID, err)
-		}
+		c.populateTags(ctx, artifact, option.TagOption)
 	}
 	if option.WithLabel {
-		// TODO populate label
+		c.populateLabels(ctx, artifact)
 	}
 	if option.WithScanOverview {
-		// TODO populate scan overview
+		c.populateScanOverview(ctx, artifact)
+	}
+	if option.WithSignature {
+		c.populateSignature(ctx, artifact)
 	}
 	// populate addition links
 	c.populateAdditionLinks(ctx, artifact)
-	// TODO populate signature on artifact or label level?
 	return artifact
+}
+
+func (c *controller) populateTags(ctx context.Context, art *Artifact, option *TagOption) {
+	_, tags, err := c.tagMgr.List(ctx, &q.Query{
+		Keywords: map[string]interface{}{
+			"artifact_id": art.ID,
+		},
+	})
+	if err != nil {
+		log.Errorf("failed to list tag of artifact %d: %v", art.ID, err)
+		return
+	}
+	for _, tag := range tags {
+		art.Tags = append(art.Tags, c.assembleTag(ctx, tag, option))
+	}
 }
 
 // assemble several part into a single tag
@@ -400,7 +422,7 @@ func (c *controller) assembleTag(ctx context.Context, tag *tm.Tag, option *TagOp
 		return t
 	}
 	if option.WithImmutableStatus {
-		t.Immutable = c.isImmutable(repo.ProjectID, repo.Name, tag.Name)
+		c.populateImmutableStatus(ctx, t)
 	}
 	if option.WithSignature {
 		if a, err := c.artMgr.Get(ctx, t.ArtifactID); err != nil {
@@ -424,19 +446,41 @@ func (c *controller) populateTagSignature(ctx context.Context, repo string, tag 
 	tag.Signed = option.SignatureChecker.IsTagSigned(tag.Name, digest)
 }
 
-// check whether the tag is Immutable
-func (c *controller) isImmutable(projectID int64, repo string, tag string) bool {
-	_, repoName := utils.ParseRepository(repo)
-	matched, err := c.immutableMtr.Match(projectID, art.Candidate{
+func (c *controller) populateLabels(ctx context.Context, art *Artifact) {
+	labels, err := c.labelMgr.ListByArtifact(ctx, art.ID)
+	if err != nil {
+		log.Errorf("failed to list labels of artifact %d: %v", art.ID, err)
+		return
+	}
+	art.Labels = labels
+}
+
+func (c *controller) populateImmutableStatus(ctx context.Context, tag *Tag) {
+	repo, err := c.repoMgr.Get(ctx, tag.RepositoryID)
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	_, repoName := utils.ParseRepository(repo.Name)
+	matched, err := c.immutableMtr.Match(repo.ProjectID, art.Candidate{
 		Repository:  repoName,
-		Tag:         tag,
-		NamespaceID: projectID,
+		Tag:         tag.Name,
+		NamespaceID: repo.ProjectID,
 	})
 	if err != nil {
 		log.Error(err)
-		return false
+		return
 	}
-	return matched
+	tag.Immutable = matched
+}
+
+func (c *controller) populateScanOverview(ctx context.Context, art *Artifact) {
+	// TODO implement
+}
+
+func (c *controller) populateSignature(ctx context.Context, art *Artifact) {
+	// TODO implement
+	// TODO populate signature on artifact or tag level?
 }
 
 func (c *controller) populateAdditionLinks(ctx context.Context, artifact *Artifact) {
