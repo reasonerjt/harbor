@@ -34,8 +34,8 @@ export function GeneralTranslatorLoader(http: HttpClient, config: IServiceConfig
         CommonModule,
         HttpClientModule,
         HttpClientXsrfModule.withOptions({
-            cookieName: '_xsrf',
-            headerName: 'X-Xsrftoken'
+            cookieName: '__csrf',
+            headerName: 'X-Harbor-CSRF-Token'
         }),
         FormsModule,
         ReactiveFormsModule,
@@ -68,6 +68,7 @@ export function GeneralTranslatorLoader(http: HttpClient, config: IServiceConfig
     ],
     providers: [
         CookieService,
-        { provide: HttpXsrfTokenExtractor, useClass: HttpXsrfTokenExtractorToBeUsed }]
+        // { provide: HttpXsrfTokenExtractor, useClass: HttpXsrfTokenExtractorToBeUsed }
+    ]
 })
 export class SharedModule { }
