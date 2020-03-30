@@ -23,9 +23,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/goharbor/harbor/src/common"
 	"github.com/goharbor/harbor/src/common/models"
 	"github.com/goharbor/harbor/src/common/rbac"
 	"github.com/goharbor/harbor/src/common/security"
+	"github.com/goharbor/harbor/src/core/config"
 	"github.com/goharbor/harbor/src/core/promgr/metamgr"
 	"github.com/goharbor/harbor/src/lib"
 	"github.com/goharbor/harbor/src/pkg/permission/types"
@@ -84,6 +86,10 @@ func TestMain(m *testing.M) {
 	checker = reqChecker{
 		pm: mockPM{},
 	}
+	conf := map[string]interface{}{
+		common.ExtEndpoint: "https://harbor.test",
+	}
+	config.InitWithSettings(conf)
 	if rc := m.Run(); rc != 0 {
 		os.Exit(rc)
 	}
@@ -153,7 +159,6 @@ func TestMiddleware(t *testing.T) {
 
 	ctx1 := lib.WithArtifactInfo(baseCtx, ar1)
 	ctx2 := lib.WithArtifactInfo(baseCtx, ar2)
-	ctx2x := lib.WithArtifactInfo(context.Background(), ar2) // no securityCtx
 	ctx3 := lib.WithArtifactInfo(baseCtx, ar3)
 	ctx4 := lib.WithArtifactInfo(baseCtx, ar4)
 	ctx5 := lib.WithArtifactInfo(baseCtx, ar5)
@@ -165,13 +170,6 @@ func TestMiddleware(t *testing.T) {
 	req4, _ := http.NewRequest(http.MethodPost, "/v2/project_1/ubuntu/blobs/uploads/mount=?mount=sha256:08e4a417ff4e3913d8723a05cc34055db01c2fd165b588e049c5bad16ce6094f&from=project_2/ubuntu", nil)
 	req5, _ := http.NewRequest(http.MethodPost, "/v2/project_1/ubuntu/blobs/uploads/mount=?mount=sha256:08e4a417ff4e3913d8723a05cc34055db01c2fd165b588e049c5bad16ce6094f&from=project_3/ubuntu", nil)
 	req6, _ := http.NewRequest(http.MethodPost, "/v2/project_1/ubuntu/blobs/uploads/mount=?mount=sha256:08e4a417ff4e3913d8723a05cc34055db01c2fd165b588e049c5bad16ce6094f&from=project_0/ubuntu", nil)
-
-	os.Setenv("REGISTRY_CREDENTIAL_USERNAME", "testuser")
-	os.Setenv("REGISTRY_CREDENTIAL_PASSWORD", "testpassword")
-	defer func() {
-		os.Unsetenv("REGISTRY_CREDENTIAL_USERNAME")
-		os.Unsetenv("REGISTRY_CREDENTIAL_PASSWORD")
-	}()
 
 	req2x.SetBasicAuth("testuser", "testpassword")
 
@@ -190,10 +188,6 @@ func TestMiddleware(t *testing.T) {
 		{
 			input:  req2.WithContext(ctx2),
 			status: http.StatusUnauthorized,
-		},
-		{
-			input:  req2x.WithContext(ctx2x),
-			status: http.StatusOK,
 		},
 		{
 			input:  req3.WithContext(baseCtx),
@@ -218,4 +212,69 @@ func TestMiddleware(t *testing.T) {
 		Middleware()(next).ServeHTTP(rec, c.input)
 		assert.Equal(t, c.status, rec.Result().StatusCode)
 	}
+}
+
+func TestGetChallenge(t *testing.T) {
+	req1, _ := http.NewRequest(http.MethodGet, "https://registry.test/v2/", nil)
+	req1x := req1.Clone(req1.Context())
+	req1x.SetBasicAuth("u", "p")
+	req2, _ := http.NewRequest(http.MethodGet, "https://registry.test/v2/_catalog", nil)
+	req2x := req2.Clone(req2.Context())
+	req2x.Header.Set("Authorization", "Bearer xx")
+	req3, _ := http.NewRequest(http.MethodPost, "https://registry.test/v2/project_1/ubuntu/blobs/uploads/mount=?mount=sha256:08e4a417ff4e3913d8723a05cc34055db01c2fd165b588e049c5bad16ce6094f&from=project_2/ubuntu", nil)
+	req3 = req3.WithContext(lib.WithArtifactInfo(context.Background(), lib.ArtifactInfo{
+		Repository:           "project_1/ubuntu",
+		Reference:            "14.04",
+		ProjectName:          "project_1",
+		BlobMountRepository:  "project_2/ubuntu",
+		BlobMountProjectName: "project_2",
+		BlobMountDigest:      "sha256:08e4a417ff4e3913d8723a05cc34055db01c2fd165b588e049c5bad16ce6094f",
+	}))
+	req3x := req3.Clone(req3.Context())
+	req3x.SetBasicAuth("", "")
+	req4, _ := http.NewRequest(http.MethodGet, "https://registry.test/v2/project_1/hello-world/manifests/v1", nil)
+	req4 = req4.WithContext(lib.WithArtifactInfo(context.Background(), lib.ArtifactInfo{
+		Repository:  "project_1/hello-world",
+		Reference:   "v1",
+		ProjectName: "project_1",
+	}))
+
+	cases := []struct {
+		request   *http.Request
+		challenge string
+	}{
+		{
+			request:   req1,
+			challenge: `Bearer realm="https://harbor.test/service/token",service="harbor-registry"`,
+		},
+		{
+			request:   req1x,
+			challenge: `Basic realm="harbor"`,
+		},
+		{
+			request:   req2,
+			challenge: `Bearer realm="https://harbor.test/service/token",service="harbor-registry"`,
+		},
+		{
+			request:   req2x,
+			challenge: `Basic realm="harbor"`,
+		},
+		{
+			request:   req3,
+			challenge: `Bearer realm="https://harbor.test/service/token",service="harbor-registry",scope="repository:project_1/ubuntu:pull,push repository:project_2/ubuntu:pull"`,
+		},
+		{
+			request:   req3x,
+			challenge: `Basic realm="harbor"`,
+		},
+		{
+			request:   req4,
+			challenge: `Bearer realm="https://harbor.test/service/token",service="harbor-registry",scope="repository:project_1/hello-world:pull"`,
+		},
+	}
+	for _, c := range cases {
+		acs := accessList(c.request)
+		assert.Equal(t, c.challenge, getChallenge(c.request, acs))
+	}
+
 }
