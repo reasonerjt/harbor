@@ -12,13 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 import {
-  AfterViewInit,
   Component,
   ElementRef,
-  EventEmitter,
   Input, OnDestroy,
   OnInit,
-  Output,
   ViewChild,
 
 } from "@angular/core";
@@ -27,11 +24,9 @@ import { catchError, debounceTime, distinctUntilChanged, finalize, map } from 'r
 import { TranslateService } from "@ngx-translate/core";
 import { ClrLoadingState, ClrDatagridStateInterface, ClrDatagridComparatorInterface } from "@clr/angular";
 
-import { HttpParams } from "@angular/common/http";
 import { ActivatedRoute, Router } from "@angular/router";
 import {
   Comparator, Label, LabelService, ScanningResultService,
-  State,
   UserPermissionService, USERSTATICPERMISSION, VulnerabilitySummary
 } from "../../../../../../lib/services";
 import {
@@ -59,7 +54,7 @@ import {
 } from "../../../../../../lib/entities/shared.const";
 import { operateChanges, OperateInfo, OperationState } from "../../../../../../lib/components/operation/operate";
 import { errorHandler } from "../../../../../../lib/utils/shared/shared.utils";
-import { ArtifactFront as Artifact, mutipleFilter, artifactImages, ArtifactFront } from "../../../artifact/artifact";
+import { ArtifactFront as Artifact, mutipleFilter } from "../../../artifact/artifact";
 import { Project } from "../../../../project";
 import { ArtifactService as NewArtifactService } from "../../../../../../../ng-swagger-gen/services/artifact.service";
 import { ADDITIONS } from "../../../artifact/artifact-additions/models";
@@ -373,7 +368,6 @@ export class ArtifactListTabComponent implements OnInit, OnDestroy {
             })).subscribe(artifacts => {
               this.artifactList = artifacts;
               this.getArtifactAnnotationsArray(this.artifactList);
-              this.getArtifactIcon(this.artifactList);
             }, error => {
               this.errorHandlerService.error(error);
             });
@@ -401,7 +395,6 @@ export class ArtifactListTabComponent implements OnInit, OnDestroy {
             }
             this.artifactList = res.body;
             this.getArtifactAnnotationsArray(this.artifactList);
-            this.getArtifactIcon(this.artifactList);
           }, error => {
             // error
             this.errorHandlerService.error(error);
@@ -855,9 +848,9 @@ export class ArtifactListTabComponent implements OnInit, OnDestroy {
   }
   getImagePermissionRule(projectId: number): void {
     const permissions = [
-      { resource: USERSTATICPERMISSION.REPOSITORY_TAG_LABEL.KEY, action: USERSTATICPERMISSION.REPOSITORY_TAG_LABEL.VALUE.CREATE },
+      { resource: USERSTATICPERMISSION.REPOSITORY_ARTIFACT_LABEL.KEY, action: USERSTATICPERMISSION.REPOSITORY_ARTIFACT_LABEL.VALUE.CREATE },
       { resource: USERSTATICPERMISSION.REPOSITORY.KEY, action: USERSTATICPERMISSION.REPOSITORY.VALUE.PULL },
-      { resource: USERSTATICPERMISSION.REPOSITORY_TAG.KEY, action: USERSTATICPERMISSION.REPOSITORY_TAG.VALUE.DELETE },
+      { resource: USERSTATICPERMISSION.ARTIFACT.KEY, action: USERSTATICPERMISSION.ARTIFACT.VALUE.DELETE },
       { resource: USERSTATICPERMISSION.REPOSITORY_TAG_SCAN_JOB.KEY, action: USERSTATICPERMISSION.REPOSITORY_TAG_SCAN_JOB.VALUE.CREATE },
     ];
     this.userPermissionService.hasProjectPermissions(this.projectId, permissions).subscribe((results: Array<boolean>) => {
@@ -984,14 +977,5 @@ export class ArtifactListTabComponent implements OnInit, OnDestroy {
   }
   get isFilterReadonly() {
     return this.filterByType === 'labels' ? 'readonly' : null;
-  }
-  getArtifactIcon(artifacts: ArtifactFront[]) {
-    for (const artifact of artifacts) {
-      if (artifactImages.some(image => image === artifact.type)) {
-        artifact.showImage = 'images/artifact-' + artifact.type.toLowerCase() + '.svg';
-      } else {
-        artifact.showImage = 'images/artifact-default.svg';
-      }
-    }
   }
 }

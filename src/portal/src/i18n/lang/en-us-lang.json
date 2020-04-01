@@ -992,6 +992,7 @@
         "CHART": {
             "SCANNING_TIME": "Scan completed time:",
             "SCANNING_PERCENT": "Scan completed percent:",
+            "SCANNING_PERCENT_EXPLAIN": "(Scan completed percentage is calculated as # of successfully scanned images / total number of images referenced within the image index not including the index file itself and the images that do not support being scanned.)",
             "TOOLTIPS_TITLE": "{{totalVulnerability}} of {{totalPackages}} {{package}} have known {{vulnerability}}.",
             "TOOLTIPS_TITLE_SINGULAR": "{{totalVulnerability}} of {{totalPackages}} {{package}} has known {{vulnerability}}.",
             "TOOLTIPS_TITLE_ZERO": "No recognizable vulnerability found"
@@ -1025,7 +1026,7 @@
         "FILTER_FOR_ARTIFACTS": "Filter Artifacts",
         "ADDITIONS": "Additions",
         "ANNOTATION": "Annotations",
-        "EXTRA_PROPERTIES": "Extra Attributes",
+        "OVERVIEW": "Overview",
         "IMAGE": "IMAGE",
         "CHART": "CHART",
         "CNAB": "CNAB",
@@ -1155,6 +1156,7 @@
     "UNKNOWN": "n/a",
     "STATUS": "Status",
     "START_TIME": "Start Time",
+    "CREATION_TIME": "Creation Time",
     "UPDATE_TIME": "Update Time",
     "LOGS": "Logs",
     "PENDING": "Pending",
@@ -1403,7 +1405,8 @@
         "VIEW_DOC": "view documentation",
         "ALL_SCANNERS": "All scanners",
         "HELP_INFO_1": "The default scanner has been installed. To install other scanners refer to the ",
-        "HELP_INFO_2": "documentation."
+        "HELP_INFO_2": "documentation.",
+        "NO_DEFAULT_SCANNER": "No default scanner"
 
     }
 }

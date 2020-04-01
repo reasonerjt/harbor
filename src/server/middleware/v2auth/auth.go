@@ -15,7 +15,6 @@
 package v2auth
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -27,7 +26,7 @@ import (
 	"github.com/goharbor/harbor/src/core/config"
 	"github.com/goharbor/harbor/src/core/promgr"
 	"github.com/goharbor/harbor/src/core/service/token"
-	ierror "github.com/goharbor/harbor/src/lib/error"
+	"github.com/goharbor/harbor/src/lib/errors"
 	serror "github.com/goharbor/harbor/src/server/error"
 )
 
@@ -123,7 +122,7 @@ func Middleware() func(http.Handler) http.Handler {
 				// the header is needed for "docker manifest" commands: https://github.com/docker/cli/issues/989
 				rw.Header().Set("Docker-Distribution-Api-Version", "registry/2.0")
 				rw.Header().Set("Www-Authenticate", challenge)
-				serror.SendError(rw, ierror.UnauthorizedError(err).WithMessage(err.Error()))
+				serror.SendError(rw, errors.UnauthorizedError(err).WithMessage(err.Error()))
 				return
 			}
 			next.ServeHTTP(rw, req)
