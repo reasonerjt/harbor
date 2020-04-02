@@ -164,6 +164,7 @@ func TestMiddleware(t *testing.T) {
 	ctx5 := lib.WithArtifactInfo(baseCtx, ar5)
 	req1a, _ := http.NewRequest(http.MethodGet, "/v2/project_1/hello-world/manifest/v1", nil)
 	req1b, _ := http.NewRequest(http.MethodDelete, "/v2/project_1/hello-world/manifest/v1", nil)
+	req1c, _ := http.NewRequest(http.MethodHead, "/v2/project_1/hello-world/manifest/v1", nil)
 	req2, _ := http.NewRequest(http.MethodGet, "/v2/library/ubuntu/manifest/14.04", nil)
 	req3, _ := http.NewRequest(http.MethodGet, "/v2/_catalog", nil)
 	req4, _ := http.NewRequest(http.MethodPost, "/v2/project_1/ubuntu/blobs/uploads/mount=?mount=sha256:08e4a417ff4e3913d8723a05cc34055db01c2fd165b588e049c5bad16ce6094f&from=project_2/ubuntu", nil)
@@ -181,6 +182,10 @@ func TestMiddleware(t *testing.T) {
 		{
 			input:  req1b.WithContext(ctx1),
 			status: http.StatusOK,
+		},
+		{
+			input:  req1c.WithContext(ctx1),
+			status: http.StatusUnauthorized,
 		},
 		{
 			input:  req2.WithContext(ctx2),

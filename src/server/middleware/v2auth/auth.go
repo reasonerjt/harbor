@@ -42,6 +42,7 @@ func (rc *reqChecker) check(req *http.Request) (string, error) {
 		return "", fmt.Errorf("the security context got from request is nil")
 	}
 	al := accessList(req)
+
 	for _, a := range al {
 		if a.target == login && !securityCtx.IsAuthenticated() {
 			return getChallenge(req, al), errors.New("unauthorized")
@@ -49,7 +50,9 @@ func (rc *reqChecker) check(req *http.Request) (string, error) {
 		if a.target == catalog && !securityCtx.IsSysAdmin() {
 			return getChallenge(req, al), fmt.Errorf("unauthorized to list catalog")
 		}
-		if a.target == repository {
+		if a.target == repository && req.Header.Get(authHeader) == "" && req.Method == http.MethodHead { // make sure 401 is returned for CLI HEAD, see #11271
+			return getChallenge(req, al), fmt.Errorf("authorize header needed to send HEAD to repository")
+		} else if a.target == repository {
 			pn := strings.Split(a.name, "/")[0]
 			pid, err := rc.projectID(pn)
 			if err != nil {
@@ -57,7 +60,7 @@ func (rc *reqChecker) check(req *http.Request) (string, error) {
 			}
 			resource := rbac.NewProjectNamespace(pid).Resource(rbac.ResourceRepository)
 			if !securityCtx.Can(a.action, resource) {
-				return getChallenge(req, al), fmt.Errorf("unauthorized to access repository: %s, action: %s", a.name, rbac.ActionPull)
+				return getChallenge(req, al), fmt.Errorf("unauthorized to access repository: %s, action: %s", a.name, a.action)
 			}
 		}
 	}
