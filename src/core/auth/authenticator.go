@@ -261,7 +261,7 @@ func PostAuthenticate(u *models.User) error {
 func IsSuperUser(ctx context.Context, username string) bool {
 	u, err := user.Mgr.GetByName(ctx, username)
 	if err != nil {
-		log.Errorf("Failed to get user from DB, username: %s, error: %v", username, err)
+		log.Warningf("Failed to get user from DB for super user checking, username: %s, error: %v", username, err)
 		return false
 	}
 	return u.UserID == 1
