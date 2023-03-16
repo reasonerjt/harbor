@@ -16,7 +16,7 @@ docker ps
 DIR="$(cd "$(dirname "$0")" && pwd)"
 echo "current dir: `pwd`"
 echo "GOPATH: $GOPATH, GOROOT: $GOROOT"
-find -depth 2 .
+find . -maxdepth 2
 go test -race -i ./src/core ./src/jobservice
 sudo -E env "PATH=$PATH" "POSTGRES_MIGRATION_SCRIPTS_PATH=$DIR/../../make/migrations/postgresql/" ./tests/coverage4gotest.sh
 #goveralls -coverprofile=profile.cov -service=github || true
