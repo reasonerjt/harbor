@@ -14,6 +14,8 @@
 
 package common
 
+import "time"
+
 type contextKey string
 
 // const variables
@@ -132,6 +134,7 @@ const (
 	OIDCGroupType                     = 3
 	LDAPGroupAdminDn                  = "ldap_group_admin_dn"
 	LDAPGroupMembershipAttribute      = "ldap_group_membership_attribute"
+	LDAPGroupAttachParallel           = "ldap_group_attach_parallel"
 	DefaultRegistryControllerEndpoint = "http://registryctl:8080"
 	DefaultPortalURL                  = "http://portal:8080"
 	DefaultRegistryCtlURL             = "http://registryctl:8080"
@@ -149,7 +152,7 @@ const (
 	OIDCCallbackPath = "/c/oidc/callback"
 	OIDCLoginPath    = "/c/oidc/login"
 
-	AuthProxyRediretPath = "/c/authproxy/redirect"
+	AuthProxyRedirectPath = "/c/authproxy/redirect"
 
 	// Global notification enable configuration
 	NotificationEnable = "notification_enable"
@@ -241,4 +244,7 @@ const (
 	BeegoMaxUploadSizeBytes = "beego_max_upload_size_bytes"
 	// DefaultBeegoMaxUploadSizeBytes sets default max upload size to 128GB
 	DefaultBeegoMaxUploadSizeBytes = 1 << 37
+
+	// Global Leeway used for token validation
+	JwtLeeway = 60 * time.Second
 )
