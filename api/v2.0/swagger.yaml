@@ -4671,6 +4671,33 @@ paths:
           $ref: '#/responses/403'
         '500':
           $ref: '#/responses/500'
+  /system/rotatesecretkey:
+    post:
+      summary: Encrypt the data in database using new secret key
+      description: >- 
+        The API will try to use the "current_secret" to decrypt the data and use "new_secret" to encrypt the data,
+        and persist them to the DB.  After that, the system will be put into readonly mode.  
+        This API can only be called by system admin.  It's expected that Harbor should be re-configured with the new secret key
+        after this API is called successfully.
+      operationId: rotateSecretKey
+      tags:
+          - rotateSecretKey
+      parameters:
+        - $ref: '#/parameters/requestId'
+        - in: body
+          name: rotateSecretKeyRequest
+          description: The input should contain current and new secrets, and additional flags that may impact the flow.
+          schema:
+            $ref: "#/definitions/RotateSecretKeyRequest"
+      responses:
+        '200':
+          description: The data are re-encrypted successfully and the system is put into readonly mode.
+        '401':
+          $ref: '#/responses/401'
+        '403':
+          $ref: '#/responses/403'
+        '500':
+          $ref: '#/responses/500'
   /jobservice/pools:
     get:
       operationId: getWorkerPools
@@ -10079,3 +10106,15 @@ definitions:
         type: string
         description: 'The scan type for the scan request. Two options are currently supported, vulnerability and sbom'
         enum: [ vulnerability, sbom ]
+  RotateSecretKeyRequest:
+    type: object
+    properties:
+      current_secret_key:
+        type: string
+        description: The current secret key used to decrypt the data.
+      new_secret_key:
+        type: string
+        description: The new secret key to be used to encrypt the data.
+      skip_oidc_secret:
+        type: boolean
+        description: If set to true, the OIDC secret will not be re-encrypted.

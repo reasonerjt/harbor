@@ -70,6 +70,7 @@ func New() http.Handler {
 		ScheduleAPI:           newScheduleAPI(),
 		SecurityhubAPI:        newSecurityAPI(),
 		PermissionsAPI:        newPermissionsAPIAPI(),
+		RotateSecretKeyAPI:    newRotateSecretKeyAPI(),
 	})
 	if err != nil {
 		log.Fatal(err)
