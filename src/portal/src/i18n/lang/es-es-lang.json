@@ -272,7 +272,10 @@
         "PROXY_CACHE_TOOLTIP": "Habilite esta opción para permitir que este proyecto actúe como caché de extracción para una instancia de registro de destino en particular. Harbor solo puede actuar como proxy para los registros DockerHub, Docker Registry, Harbor, AWS ECR, Azure ACR, Quay, Google GCR, JFrog Artifactory y Github GHCR.",
         "ENDPOINT": "Endpoint",
         "PROXY_CACHE_ENDPOINT": "Proxy Cache Endpoint",
-        "NO_PROJECT": "No pudimos encontrar ningún proyecto"
+        "NO_PROJECT": "No pudimos encontrar ningún proyecto",
+        "CONNECTION_LIMIT": "Max connection to upstream registry",
+        "PROXY_CACHE_MAX_UPSTREAM_CONN_TIP": "The max connection to the upstream registry for this proxy cache project, if -1, then there is no limit",
+        "PROXY_CACHE_MAX_UPSTREAM_CONN_INPUT_TIP": "Please enter -1 or an integer greater than 0. "
     },
     "PROJECT_DETAIL": {
         "SUMMARY": "Resumen",
@@ -295,7 +298,7 @@
         "PUBLIC_POLICY": "Hacer público un registro de proyecto hará que todos los repositorios sean accesibles para todos.",
         "SECURITY": "Seguridad Despliegues",
         "CONTENT_TRUST_TOGGLE": "Habilitar la confianza de contenido",
-        "CONTENT_TRUST_POLCIY": "Solo permita la implementación de imágenes verificadas.",
+        "CONTENT_TRUST_POLICY": "Solo permita la implementación de imágenes verificadas.",
         "PREVENT_VULNERABLE_TOGGLE": "Evitar que se ejecuten imágenes vulnerables.",
         "PREVENT_VULNERABLE_1": "Impedir imágenes con la gravedad de la vulnerabilidad de",
         "PREVENT_VULNERABLE_2": "y más arriba de ser desplegado.",
@@ -1308,7 +1311,7 @@
     "CONFLICT_ERROR": "No hemos podido llevar a cabo la acción debido a un conflicto.",
     "PRECONDITION_FAILED": "No hemos podido llevar a cabo la acción debido a un error de precondición.",
     "SERVER_ERROR": "No hemos podido llevar a cabo la acción debido a un error interno.",
-    "INCONRRECT_OLD_PWD": "La contraseña antigua no es correcta.",
+    "INCORRECT_OLD_PWD": "La contraseña antigua no es correcta.",
     "UNKNOWN": "n/a",
     "STATUS": "Estatus",
     "START_TIME": "Tiempo Inicio",
@@ -1345,6 +1348,7 @@
         "MSG_SCHEDULE_RESET": "Programación de Garbage Collection ha sido reiniciada",
         "PARAMETERS": "Parametros",
         "DELETE_UNTAGGED": "Permitir garbage collection en artefactos no tageados",
+        "DELETE_TAG": "Allow garbage collection to remove tag files from backend storage",
         "EXPLAIN": "GC es una operación que requiere un uso intensivo de recursos informáticos y que puede afectar el rendimiento del registro",
         "EXPLAIN_TIME_WINDOW": "Los artefactos cargados en las últimas 2 horas (la ventana predeterminada) se excluyen de la recolección de basura",
         "DRY_RUN_SUCCESS": "Activación de dry run satisfactorio",

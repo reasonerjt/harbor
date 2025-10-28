@@ -271,7 +271,10 @@
         "PROXY_CACHE_TOOLTIP": "Die Aktivierung der Funktion erlaubt es dem Projekt, als Cache für eine andere Registry Instanz zu dienen. Harbor unterstützt die Proxy Funktion nur für DockerHub, Docker Registry, Harbor, Aws ECR, Azure ACR, Alibaba Cloud ACR, Quay, Google GCR, JFrog Artifactory, und Github GHCR",
         "ENDPOINT": "Endpunkt",
         "PROXY_CACHE_ENDPOINT": "Proxy Cache Endpunkt",
-        "NO_PROJECT": "Es konnte kein Projekt gefunden werden"
+        "NO_PROJECT": "Es konnte kein Projekt gefunden werden",
+        "CONNECTION_LIMIT": "Max connection to upstream registry",
+        "PROXY_CACHE_MAX_UPSTREAM_CONN_TIP": "The max connection to the upstream registry for this proxy cache project, if -1, then there is no limit",
+        "PROXY_CACHE_MAX_UPSTREAM_CONN_INPUT_TIP": "Please enter -1 or an integer greater than 0. "
     },
     "PROJECT_DETAIL": {
         "SUMMARY": "Zusammenfassung",
@@ -294,7 +297,7 @@
         "PUBLIC_POLICY": "Ein Projekt öffentlich einzustellen, macht die Repositories für alle zugreifbar.",
         "SECURITY": "Deployment Sicherheit",
         "CONTENT_TRUST_TOGGLE": "Aktiviere Content Trust",
-        "CONTENT_TRUST_POLCIY": "Erlaube ausschließlich verifizierte Images.",
+        "CONTENT_TRUST_POLICY": "Erlaube ausschließlich verifizierte Images.",
         "PREVENT_VULNERABLE_TOGGLE": "Verhindere den Download von Images mit Schwachstellen.",
         "PREVENT_VULNERABLE_1": "Verhindere den Download von Images mit Schwachstellen des Schweregrads ",
         "PREVENT_VULNERABLE_2": "und darüber.",
@@ -1311,7 +1314,7 @@
     "CONFLICT_ERROR": "Der Befehl kann nicht ausgeführt werden, da es Konflikte gibt.",
     "PRECONDITION_FAILED": "Der Befehl kann wegen eines Überprüfungsfehlers nicht ausgeführt werden.",
     "SERVER_ERROR": "Der Befehl kann wegen einem internen Serverfehler nicht ausgeführt werden.",
-    "INCONRRECT_OLD_PWD": "Das alte Passwort ist nicht korrekt.",
+    "INCORRECT_OLD_PWD": "Das alte Passwort ist nicht korrekt.",
     "UNKNOWN": "n/a",
     "STATUS": "Status",
     "START_TIME": "Startzeit",
@@ -1348,6 +1351,7 @@
         "MSG_SCHEDULE_RESET": "Speicherbereinigungs-Intervall wurde zurückgesetzt",
         "PARAMETERS": "Parameter",
         "DELETE_UNTAGGED": "Erlaube Speicherbereinigung auf Artefakte ohne Tag",
+        "DELETE_TAG": "Allow garbage collection to remove tag files from backend storage",
         "EXPLAIN": "Speicherbereinigung (Garbage Collection / GC) ist eine rechenintensive Operation, die die Registry-Leistung beeinflussen kann",
         "EXPLAIN_TIME_WINDOW": "Artifacts uploaded in the past 2 hours(the default window) are excluded from garbage collection",
         "DRY_RUN_SUCCESS": "Probelauf erfolgreich gestartet",
